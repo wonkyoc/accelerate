@@ -416,6 +416,12 @@ def dispatch_model(
                 # Note: To handle the disk offloading case, we can not simply use weights_map[param_name].data_ptr() as the reference pointer,
                 # as we have no guarantee that safetensors' `file.get_tensor()` will always give the same pointer.
 
+        # WC: device_map only offloads the model weight, not execution
+        # therefore, we need to remap execution after offloaindg the weights
+
+        execution_device = device_map
+        execution_device[""] = main_device
+
         attach_align_device_hook_on_blocks(
             model,
             execution_device=execution_device,
