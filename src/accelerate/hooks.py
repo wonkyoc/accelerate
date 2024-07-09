@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import functools
+from time import time
 from typing import Dict, List, Mapping, Optional, Union
 
 import torch
@@ -352,6 +353,15 @@ class AlignDevicesHook(ModelHook):
                     fp16_statistics=fp16_statistics,
                     tied_params_map=self.tied_params_map,
                 )
+            #print("###")
+            #print(args[0].size())
+
+        #if hasattr(module, "offloaded_tensor"):
+        #    print(module)
+        #    start = time()
+        #    module.offloaded_tensor.copy_(args[0])
+        #    print(f"{time()-start}")
+        #    return (module.offloaded_tensor,), type(kwargs)({})
 
         return send_to_device(args, self.execution_device), send_to_device(
             kwargs, self.execution_device, skip_keys=self.skip_keys
@@ -377,6 +387,10 @@ class AlignDevicesHook(ModelHook):
             self.tied_pointers_to_remove = set()
 
         if self.io_same_device and self.input_device is not None:
+            #if module.offloaded_tensor is not None:
+            #    output.sample.copy_(module.offloaded_tensor)
+            #    output.sample = module.offloaded_tensor
+            #else:
             output = send_to_device(output, self.input_device, skip_keys=self.skip_keys)
 
         return output
