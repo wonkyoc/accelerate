@@ -29,6 +29,8 @@ from typing import Dict, List, Optional, Tuple, Union
 import packaging
 import torch
 import torch.nn as nn
+from torch.distributed._tensor import DTensor, Shard, Replicate, distribute_tensor, distribute_module, init_device_mesh
+
 
 from ..state import AcceleratorState
 from .constants import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
@@ -44,6 +46,8 @@ from .imports import (
 from .offload import load_offloaded_weight, offload_weight, save_offload_index
 from .tqdm import is_tqdm_available, tqdm
 from .versions import compare_versions
+
+
 
 
 if is_npu_available(check_device=False):
@@ -293,6 +297,8 @@ def set_module_tensor_to_device(
     dtype: Optional[Union[str, torch.dtype]] = None,
     fp16_statistics: Optional[torch.HalfTensor] = None,
     tied_params_map: Optional[Dict[int, Dict[torch.device, torch.Tensor]]] = None,
+    device_mesh = None,
+    placements = None,
 ):
     """
     A helper function to set a given tensor (parameter of buffer) of a module on a specific device (note that doing
@@ -420,6 +426,8 @@ def set_module_tensor_to_device(
                     new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to(device)
             elif param_cls.__name__ in ["QTensor", "QBitsTensor"]:
                 new_value = torch.nn.Parameter(new_value, requires_grad=old_value.requires_grad).to(device)
+            elif param_cls.__name__ in ["DTensor"]:
+                new_value = distribute_tensor(new_value, device_mesh=device_mesh, placements=placements).to(device)
             else:
                 new_value = param_cls(new_value, requires_grad=old_value.requires_grad).to(device)
 

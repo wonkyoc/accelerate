@@ -345,6 +345,13 @@ class AlignDevicesHook(ModelHook):
                 ):
                     self.tied_pointers_to_remove.add((value.data_ptr(), self.execution_device))
 
+                device_mesh = None
+                placements = None
+
+                if getattr(args[0], "device_mesh", None) is not None:
+                    device_mesh = args[0].device_mesh
+                    placements = args[0].placements
+
                 set_module_tensor_to_device(
                     module,
                     name,
@@ -352,6 +359,8 @@ class AlignDevicesHook(ModelHook):
                     value=value,
                     fp16_statistics=fp16_statistics,
                     tied_params_map=self.tied_params_map,
+                    device_mesh=device_mesh,
+                    placements=placements,
                 )
             #print("###")
             #print(args[0].size())
